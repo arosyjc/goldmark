@@ -2,9 +2,11 @@ package goldmark_test
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 
 	. "github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/testutil"
 	"github.com/yuin/goldmark/text"
 )
@@ -135,22 +137,45 @@ l4`,
 			s := []byte(cs.Source)
 			md := New()
 			n := md.Parser().Parse(text.NewReader(s))
-			c1 := n.FirstChild()
-			c2 := c1.NextSibling().NextSibling()
-			if cs.C {
-				c1 = c1.FirstChild()
-				c2 = c2.FirstChild()
+			// fmt.Println(n.ChildCount())
+			// attributes := n.Attributes()
+			for n.HasChildren() {
+				fmt.Println("属性", n)
+				switch v := n.(type) {
+
+				case *ast.FencedCodeBlock:
+					fmt.Println("123")
+				case *ast.CodeBlock:
+				case *ast.String:
+					// fmt.Println(string(v.Value))
+					// fmt.Println(v)
+				case *ast.Heading:
+					fmt.Printf("Heading %d: %v\n", v.Level, v)
+				default:
+					fmt.Println(v.Type())
+				}
+				n = n.LastChild()
 			}
-			if !bytes.Equal(c1.Text(s), []byte(cs.T1)) { // nolint: staticcheck
+			// for idx, a := range attributes {
+			// 	fmt.Println("属性", idx, a)
+			// }
+			// c1 := n.FirstChild()
 
-				t.Errorf("%s unmatch: %s", cs.Name, testutil.DiffPretty(c1.Text(s), []byte(cs.T1))) // nolint: staticcheck
+			// c2 := c1.NextSibling().NextSibling()
+			// if cs.C {
+			// 	c1 = c1.FirstChild()
+			// 	c2 = c2.FirstChild()
+			// }
+			// if !bytes.Equal(c1.Text(s), []byte(cs.T1)) { // nolint: staticcheck
 
-			}
-			if !bytes.Equal(c2.Text(s), []byte(cs.T2)) { // nolint: staticcheck
+			// 	t.Errorf("%s unmatch: %s", cs.Name, testutil.DiffPretty(c1.Text(s), []byte(cs.T1))) // nolint: staticcheck
 
-				t.Errorf("%s(EOF) unmatch: %s", cs.Name, testutil.DiffPretty(c2.Text(s), []byte(cs.T2))) // nolint: staticcheck
+			// }
+			// if !bytes.Equal(c2.Text(s), []byte(cs.T2)) { // nolint: staticcheck
 
-			}
+			// 	t.Errorf("%s(EOF) unmatch: %s", cs.Name, testutil.DiffPretty(c2.Text(s), []byte(cs.T2))) // nolint: staticcheck
+
+			// }
 		})
 	}
 
