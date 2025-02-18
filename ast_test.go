@@ -3,6 +3,7 @@ package goldmark_test
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"testing"
 
 	. "github.com/yuin/goldmark"
@@ -11,6 +12,33 @@ import (
 	"github.com/yuin/goldmark/text"
 )
 
+func TestAstParseJson(t *testing.T) {
+	// body:=``
+	body, _ := os.ReadFile("mark.md")
+	md := New()
+	n := md.Parser().Parse(text.NewReader(body))
+	ast.Walk(n, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+		if entering {
+			switch node := n.(type) {
+			case *ast.Blockquote:
+				fmt.Println("BlockQuote", string(node.Lines().Value(body)))
+			case *ast.FencedCodeBlock:
+				fmt.Println("FencedCodeBlock", string(node.Lines().Value(body)))
+			case *ast.HTMLBlock:
+				fmt.Println("HTMLBlock", string(node.Lines().Value(body)))
+			case *ast.Text:
+				// fmt.Println("Text", string(node.Value(body)))
+			case *ast.RawHTML:
+				fmt.Println("RawHTML", string(node.Segments.Value(body)))
+			case *ast.Paragraph:
+				fmt.Println("Paragraph", string(node.Lines().Value(body)))
+			default:
+				// fmt.Println(node.Kind().String())
+			}
+		}
+		return ast.WalkContinue, nil
+	})
+}
 func TestASTBlockNodeText(t *testing.T) {
 	var cases = []struct {
 		Name   string
@@ -139,23 +167,65 @@ l4`,
 			n := md.Parser().Parse(text.NewReader(s))
 			// fmt.Println(n.ChildCount())
 			// attributes := n.Attributes()
-			for n.HasChildren() {
-				fmt.Println("属性", n)
-				switch v := n.(type) {
-
-				case *ast.FencedCodeBlock:
-					fmt.Println("123")
-				case *ast.CodeBlock:
-				case *ast.String:
-					// fmt.Println(string(v.Value))
-					// fmt.Println(v)
-				case *ast.Heading:
-					fmt.Printf("Heading %d: %v\n", v.Level, v)
-				default:
-					fmt.Println(v.Type())
+			ast.Walk(n, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+				if entering {
+					switch node := n.(type) {
+					case *ast.Document:
+						fmt.Println("Document", string(node.Lines().Value(s)))
+					case *ast.Blockquote:
+						fmt.Println("BlockQuote", string(node.Lines().Value(s)))
+					case *ast.Text:
+						fmt.Println("Text:", string(node.Value(s)))
+					case *ast.FencedCodeBlock:
+						fmt.Println("FencedCodeBlock", string(node.Lines().Value(s)))
+					case *ast.Paragraph:
+						fmt.Println("Paragraph", string(node.Lines().Value(s)))
+					case *ast.List:
+						fmt.Println("List", string(node.Lines().Value(s)))
+					case *ast.ListItem:
+						fmt.Println("ListItem", string(node.Lines().Value(s)))
+					case *ast.TextBlock:
+						fmt.Println("TextBlock", string(node.Lines().Value(s)))
+					case *ast.CodeBlock:
+					case *ast.String:
+						fmt.Println(string(node.Value))
+						// fmt.Println(v)
+					case *ast.Heading:
+						// fmt.Printf("Heading %d: %v\n", v.Level, v)
+					default:
+						// fmt.Println(v.Kind().String())
+					}
 				}
-				n = n.LastChild()
-			}
+				return ast.WalkContinue, nil
+			})
+			// for n.HasChildren() {
+			// 	// fmt.Println("属性", n)
+			// 	switch v := n.(type) {
+			// 	case *ast.Document:
+			// 		fmt.Println("Document", v.Kind().String())
+			// 	case *ast.Blockquote:
+			// 		fmt.Println("BlockQuote")
+			// 	case *ast.FencedCodeBlock:
+			// 		fmt.Println("123")
+			// 	case *ast.Paragraph:
+			// 		fmt.Println("Paragraph", v.Lines().Value())
+			// 	case *ast.List:
+			// 		fmt.Println("List")
+			// 	case *ast.ListItem:
+			// 		fmt.Println("ListItem")
+			// 	case *ast.TextBlock:
+			// 		fmt.Println("TextBlock")
+			// 	case *ast.CodeBlock:
+			// 	case *ast.String:
+			// 		// fmt.Println(string(v.Value))
+			// 		// fmt.Println(v)
+			// 	case *ast.Heading:
+			// 		// fmt.Printf("Heading %d: %v\n", v.Level, v)
+			// 	default:
+			// 		// fmt.Println(v.Kind().String())
+			// 	}
+			// 	n = n.LastChild()
+			// }
 			// for idx, a := range attributes {
 			// 	fmt.Println("属性", idx, a)
 			// }
